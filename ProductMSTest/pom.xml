@@ -14,10 +14,9 @@
 	<description>Product micro-service Springboot</description>
 	<properties>
 		<java.version>11</java.version>
-<sonar.projectKey>Paddupadmakshi_ProductMS
-</sonar.projectKey>
-<sonar.organization>paddu4463</sonar.organization>
-<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	<sonar.projectKey>kundanmani40</sonar.projectKey>
+	<sonar.organization>kundanmani40</sonar.organization>
+	<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 	
 	<dependencyManagement>
