@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,22 @@ public class UserAPI {
 	
 	@Autowired
 	private Environment environment;
+	
+	
+	private KafkaTemplate<String, String> kafkaTemplate;
+
+	private static final String TOPIC = "kafka-example";
+
+			
+	@GetMapping("/publish/{message}") public String post(@PathVariable("message")
+			  final String message) {
+			  
+			  kafkaTemplate.send(TOPIC,message);
+			  
+			  System.out.println("published");
+			  
+			  return "Published successfully"; }
+
 	
 	//URI to use other microservices
 	@Value("${product.uri}")
