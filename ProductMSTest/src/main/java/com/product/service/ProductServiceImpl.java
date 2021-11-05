@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 
 import com.product.dto.ProductDTO;
 import com.product.entity.Product;
+import com.product.entity.SubscribedProduct;
 import com.product.repository.ProductRepository;
+import com.product.repository.SubscribedProductRepository;
+import com.product.utility.MyPrimaryKey;
 import com.product.validator.ProductValidator;
 
 //Implementation of ProductService interface
@@ -21,6 +24,9 @@ public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private ProductRepository productRepository;
+	
+	@Autowired
+	private SubscribedProductRepository subscribedProductRepository;
 	
 	//Creating unique static Pid
 	private static int pId;
@@ -199,6 +205,28 @@ public class ProductServiceImpl implements ProductService {
 			return true;
 		}
 		return false;		
+	}
+	
+	@Override
+	public String subscribeProduct(String buyerId, String prodId, Integer quantity) throws Exception
+	{
+		Product product=productRepository.findByProdId(prodId);
+		if(product == null)
+		{
+			throw new Exception("Product does not exist");
+		}
+		if(product.getStock()>=quantity)
+		{
+			SubscribedProduct subscribedProduct=new SubscribedProduct();
+			subscribedProduct.setCompositepk(new MyPrimaryKey(buyerId, prodId));
+			subscribedProduct.setQuantity(quantity);
+			subscribedProductRepository.save(subscribedProduct);
+			return "Subsribed complete for buyer with id: "+buyerId+" to product with id: "+prodId;
+		}
+		else
+		{
+			return "Not enough stock";
+		}
 	}
 
 }

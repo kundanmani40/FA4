@@ -1,6 +1,6 @@
-drop database if exists proddb;
-create database proddb;
-use proddb;
+drop database if exists prod_db;
+create database prod_db;
+use prod_db;
 
 #Create table product
 drop table if exists product;

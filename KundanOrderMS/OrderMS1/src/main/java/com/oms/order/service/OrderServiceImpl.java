@@ -28,9 +28,10 @@ import com.oms.order.validator.OrderValidator;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 	
-	@KafkaListener(topics = "kafka-example", groupId = "group_id")
-    public void consume(String message) {
-        System.out.println("Consumed message: " + message);
+	@KafkaListener(topics = "kafka-example1", groupId = "group_id")
+    public String consume(String message) {
+		return message;
+    //    System.out.println("Consumed message: " + message);
     }
 	
 	private static int o;

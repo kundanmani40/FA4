@@ -22,5 +22,7 @@ public interface ProductService {
 	public Boolean updateStockOfProdAdd(String prodId, Integer quantity) throws Exception;
 	
 	public List<ProductDTO> viewAllProducts() throws Exception;
+	
+	public String subscribeProduct(String buyerId, String prodId, Integer quantity) throws Exception;
 
 }

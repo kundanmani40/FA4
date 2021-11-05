@@ -34,8 +34,12 @@ public class UserAPI {
 	@Autowired
 	private Environment environment;
 	
-	
+	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
+	
+	//URI to use other microservices
+	@Value("${product.uri}")
+	String prodUri;
 
 	private static final String TOPIC = "kafka-example";
 
@@ -47,12 +51,9 @@ public class UserAPI {
 			  
 			  System.out.println("published");
 			  
-			  return "Published successfully"; }
-
+			  return "Published successfully"; 
+	}
 	
-	//URI to use other microservices
-	@Value("${product.uri}")
-	String prodUri;
 	
 	@PostMapping(value = "/buyer/register")
 	public ResponseEntity<String> registerBuyer(@RequestBody BuyerDTO buyerDto){
@@ -107,17 +108,28 @@ public class UserAPI {
 		}
 	}
 	
-	@DeleteMapping(value = "/buyer/deactivate/{id}")
+	@PutMapping(value = "/buyer/deactivate/{id}")
 	public ResponseEntity<String> deleteBuyerAccount(@PathVariable String id) throws Exception{
-		
-		String msg = userService.deleteBuyer(id);
-		return new ResponseEntity<>(msg,HttpStatus.OK);
+		try {
+			String message=userService.deactivateBuyer(id);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, e.getMessage(),e);
+		}
 	}
 	
-	@DeleteMapping(value = "/seller/deactivate/{id}")
+	@PutMapping(value = "/seller/deactivate/{id}")
 	public ResponseEntity<String> deleteSellerAccount(@PathVariable String id) throws Exception{
-		String msg = userService.deleteSeller(id);
-		return new ResponseEntity<>(msg,HttpStatus.OK);
+		try {
+			String message=userService.deactivateSeller(id);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, e.getMessage(), e);
+		}
 	}
 
 	@PostMapping(value = "/buyer/addToWishlist/{buyerId}/{prodId}")
@@ -176,10 +188,44 @@ public class UserAPI {
 	}
 	
 	@PutMapping(value = "/buyer/mode/{buyerId}")
-	public ResponseEntity<String> setUserMode(@PathVariable String buyerId) throws Exception{
+	public ResponseEntity<String> setUserMode(@PathVariable String buyerId) throws Exception
+	{
+		try {
+			String message=userService.userMode(buyerId);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage(), e);
+		}
+	}
+	
+	//Get buyer mode
+	@GetMapping(value = "/buyer/getBuyerMode/{buyerId}")
+	public ResponseEntity<String> getUserMode(@PathVariable String buyerId) throws Exception{
+		try {
+			String message=userService.getBuyerMode(buyerId);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
 		
-		String msg = userService.userMode(buyerId);
-		return new ResponseEntity<>(msg,HttpStatus.OK);
+	@PostMapping(value = "/buyer/subscribeProduct/{buyerId}/{prodId}/{quantity}")
+	public ResponseEntity<String> subscribeToProduct(@PathVariable String buyerId, @PathVariable String prodId, @PathVariable Integer quantity) throws Exception
+	{
+		String s=userService.subscribeProduct(buyerId);
+		if(s.equals("False"))
+		{
+			return new ResponseEntity<String>("You cannot subscribe to a product as you do not have privilege mode. Please upgrade to privilege mode", HttpStatus.UNAUTHORIZED);
+		}
+		else
+		{
+			String message=new RestTemplate().postForObject(prodUri+"/subscribeProduct/"+buyerId+"/"+prodId+"/"+quantity, null, String.class);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
 	}
 	
 	//Method to get cart
@@ -203,8 +249,21 @@ public class UserAPI {
 		try {
 			ProductDTO productDto=new RestTemplate().getForObject(prodUri+"/getById/"+prodId, ProductDTO.class);
 			System.out.println(productDto);
-			String message=userService.addToCart(buyerId, prodId, quantity);
-			return new ResponseEntity<>(message, HttpStatus.ACCEPTED);
+			if(productDto!=null)
+			{
+				String message=userService.addToCart(buyerId, prodId, quantity);
+				String msg ="";
+				msg=msg.concat(buyerId+" ");
+				msg=msg.concat(prodId+" ");
+				msg=msg.concat(String.valueOf(quantity)+" ");
+				kafkaTemplate.send(TOPIC,msg);
+				
+				return new ResponseEntity<>(message, HttpStatus.ACCEPTED);
+			}
+			else
+			{
+				throw new Exception("No product found");
+			}
 		}
 		catch(Exception e)
 		{
@@ -243,6 +302,73 @@ public class UserAPI {
 		catch(Exception e)
 		{
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
+	
+	//Visitor can view all products
+	@SuppressWarnings("unchecked")
+	@GetMapping(value = "/visitor/visitorViewAllProducts")
+	public ResponseEntity<List<ProductDTO>> visitorViewAllProducts() throws Exception{
+		try {
+			List<ProductDTO> productsList=new RestTemplate().getForObject(prodUri+"/viewAllProducts", List.class);
+			return new ResponseEntity<List<ProductDTO>>(productsList, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
+	
+	//Visitor can view products by category
+	@SuppressWarnings("unchecked")
+	@GetMapping(value = "/visitor/visitorGetProductByCategory/{name}")
+	public ResponseEntity<List<ProductDTO>> visitorGetProductByCategory(@PathVariable String name) throws Exception{
+		try {
+			List<ProductDTO> productsList=new RestTemplate().getForObject(prodUri+"/getByCategory/"+name, List.class);
+			return new ResponseEntity<List<ProductDTO>>(productsList, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
+		
+	//Visitor can view products by category
+	@GetMapping(value = "/visitor/visitorGetProductByName/{name}")
+	public ResponseEntity<ProductDTO> visitorGetProductByName(@PathVariable String name) throws Exception{
+		try {
+			ProductDTO productDto=new RestTemplate().getForObject(prodUri+"/getByName/"+name, ProductDTO.class);
+			return new ResponseEntity<ProductDTO>(productDto, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
+		
+	//Visitor can register as buyer
+	@PostMapping(value = "/visitor/registerAsBuyer")
+	public ResponseEntity<String> visitorRegisterAsBuyer(@RequestBody BuyerDTO buyerDto) throws Exception{
+		try {
+			String message=userService.visitorRegisterAsBuyer(buyerDto);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,environment.getProperty(e.getMessage()),e);
+		}
+	}
+		
+	//Visitor can register as seller
+	@PostMapping(value = "/visitor/registerAsSeller")
+	public ResponseEntity<String> visitorRegisterAsSeller(@RequestBody SellerDTO sellerDto) throws Exception{
+		try {
+			String message=userService.visitorRegisterAsSeller(sellerDto);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,environment.getProperty(e.getMessage()),e);
 		}
 	}
 	

@@ -16,5 +16,10 @@ public class WishlistDTO {
 	public void setProdId(String prodId) {
 		this.prodId = prodId;
 	}
+	@Override
+	public String toString() {
+		return "WishlistDTO [buyerId=" + buyerId + ", prodId=" + prodId + "]";
+	}
+	
 
 }

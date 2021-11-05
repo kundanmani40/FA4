@@ -38,5 +38,11 @@ public class SellerDTO {
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
 	}
+	@Override
+	public String toString() {
+		return "SellerDTO [name=" + name + ", email=" + email + ", phoneNumber=" + phoneNumber + ", password="
+				+ password + ", isActive=" + isActive + "]";
+	}
 
+	
 }

@@ -1,5 +1,7 @@
 package com.user.entity;
 
+import java.util.Objects;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -52,5 +54,29 @@ public class Seller {
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
 	}
+	@Override
+	public String toString() {
+		return "Seller [sellerId=" + sellerId + ", name=" + name + ", email=" + email + ", phoneNumber=" + phoneNumber
+				+ ", password=" + password + ", isActive=" + isActive + "]";
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(email, isActive, name, password, phoneNumber, sellerId);
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Seller other = (Seller) obj;
+		return Objects.equals(email, other.email) && Objects.equals(isActive, other.isActive)
+				&& Objects.equals(name, other.name) && Objects.equals(password, other.password)
+				&& Objects.equals(phoneNumber, other.phoneNumber) && Objects.equals(sellerId, other.sellerId);
+	}
+	
+	
 	
 }

@@ -44,24 +44,45 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private WishlistRepository wishlistRepository;
 
-	
 	@Autowired
 	private CartRepository cartRepository;
 	
 	@Override
 	public String buyerRegistration(BuyerDTO buyerDTO) throws Exception
 	{
-		// TODO Auto-generated method stub
 		Validate.validateBuyer(buyerDTO);
-		
 		Buyer buyer = buyerRepository.findByPhoneNumber(buyerDTO.getPhoneNumber());
 		if(buyer != null)
 		{
 			throw new Exception("Buyer already present");
 		}
-		String id = "B" + b++;
 		buyer = new Buyer();
-		buyer.setBuyerId(id);
+		
+		//Method1
+		while(true)
+		{
+			String bNew="B"+b++;
+			Buyer buyerCheck=buyerRepository.findByBuyerId(bNew);
+			if(buyerCheck == null)
+			{
+				buyer.setBuyerId(bNew);
+				break;
+			}
+		}
+		//Method2
+		/*while(true)
+		{
+			
+			int b=random.nextInt(1000);
+			String bNew="B"+b;
+			Buyer buyerCheck=buyerRepository.findByBuyerId(bNew);
+			if(buyerCheck == null)
+			{
+				buyer.setBuyerId(bNew);
+				break;
+			}
+		}*/
+		
 		buyer.setEmail(buyerDTO.getEmail());
 		buyer.setName(buyerDTO.getName());
 		buyer.setPhoneNumber(buyerDTO.getPhoneNumber());
@@ -77,21 +98,55 @@ public class UserServiceImpl implements UserService {
 	public String sellerRegistration(SellerDTO sellerDTO) throws Exception {
 		// TODO Auto-generated method stub
 		Validate.validateSeller(sellerDTO);
-		
 		Seller seller = sellerRepository.findByPhoneNumber(sellerDTO.getPhoneNumber());
 		if(seller != null)
+		{
 			throw new Exception("Seller Already present");
-		
-		String id = "S" + s++;
+		}
 		seller = new Seller();
+		
+		//Method1
+		while(true)
+		{
+			String sNew="S"+s++;
+			Seller sellerCheck=sellerRepository.findBySellerId(sNew);
+			if(sellerCheck == null)
+			{
+				seller.setSellerId(sNew);
+				break;
+			}
+		}
+		
+		//Method2
+		/*while(true)
+		{
+			
+			int s=random.nextInt(1000);
+			String sNew="S"+s;
+			Seller sellerCheck=sellerRepository.findBySellerId(sNew);
+			if(sellerCheck == null)
+			{
+				seller.setSellerId(sNew);
+				break;
+			}
+		}*/
 		seller.setEmail(sellerDTO.getEmail());
-		seller.setSellerId(id);
 		seller.setName(sellerDTO.getName());
 		seller.setPassword(sellerDTO.getPassword());
 		seller.setIsActive("True");
 		seller.setPhoneNumber(sellerDTO.getPhoneNumber());
 		sellerRepository.save(seller);
 		return seller.getSellerId();
+	}
+	
+	@Override
+	public String visitorRegisterAsBuyer(BuyerDTO buyerDto) throws Exception{
+		return buyerRegistration(buyerDto);
+	}
+	
+	@Override
+	public String visitorRegisterAsSeller(SellerDTO sellerDto) throws Exception{
+		return sellerRegistration(sellerDto);
 	}
 
 	@Override
@@ -125,19 +180,35 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public String deleteBuyer(String id) throws Exception{
+	public String deactivateBuyer(String id) throws Exception{
 		// TODO Auto-generated method stub
 		Buyer buyer = buyerRepository.findByBuyerId(id);
-		buyerRepository.delete(buyer);
-		return "Account successfully deleted";
+		if(buyer.getIsActive().equals("False"))
+		{
+			throw new Exception("The buyer id: "+id+" is already deactivated!!");
+		}
+		else
+		{
+			buyer.setIsActive("False");
+			buyerRepository.save(buyer);
+			return "Account for buyer with id: "+id+" has been deactivated";
+		}
 	}
 
 	@Override
-	public String deleteSeller(String id) throws Exception{
+	public String deactivateSeller(String id) throws Exception{
 		// TODO Auto-generated method stub
 		Seller seller = sellerRepository.findBySellerId(id);
-		sellerRepository.delete(seller);
-		return "Account successfully deleted";
+		if(seller.getIsActive().equals("False"))
+		{
+			throw new Exception("The seller id: "+id+" is already deactivated!!");
+		}
+		else
+		{
+			seller.setIsActive("False");
+			sellerRepository.save(seller);
+			return "Account for seller with id: "+id+" has been deactivated";
+		}
 	}
 
 	@Override
@@ -182,16 +253,56 @@ public class UserServiceImpl implements UserService {
 		}
 		return list;
 	}
-
+	
 	@Override
 	public String userMode(String buyerId) throws Exception {
 		// TODO Auto-generated method stub
 		Buyer buyer = buyerRepository.findByBuyerId(buyerId);
 		if(buyer==null)
-			throw new Exception("Not eligible for privilege mode");
-		buyer.setIsPrivileged("True");
-		buyerRepository.save(buyer);
-		return "Successfully changed to privilege mode";
+		{
+			throw new Exception("Buyer does not exists");
+		}
+		if(buyer.getIsPrivileged().equals("True"))
+		{
+			buyer.setIsPrivileged("False");
+			buyerRepository.save(buyer);
+			return "Successfully changed to Non-privilege mode";
+		}
+		else
+		{
+			if(Integer.valueOf(buyer.getRewardPoints())>=100)
+			{
+				updateRewardPointsDelete(buyerId, 100);
+				buyer.setIsPrivileged("True");
+				buyerRepository.save(buyer);
+				return "Successfully changed to privilege mode";
+			}
+			else
+			{
+				return "You do not have enough reward points to opt for privilege mode. Sorry!!";
+			}
+			
+		}
+		
+	}
+	
+	@Override
+	public String getBuyerMode(String id) throws Exception{
+		Buyer buyer=buyerRepository.findByBuyerId(id);
+		if(buyer == null)
+		{
+			throw new Exception("Buyer does not exists");
+		}
+		else
+		{
+			return buyer.getIsPrivileged();
+		}
+	}
+	
+	@Override
+	public String subscribeProduct(String buyerId) throws Exception
+	{
+		return getBuyerMode(buyerId);
 	}
 
 	//Add to cart service

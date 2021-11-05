@@ -101,6 +101,20 @@ public class ProductAPI {
 		
 	}
 	
+	//Privilege mode buyer can subscribe product
+	@PostMapping(value = "/subscribeProduct/{buyerId}/{prodId}/{quantity}")
+	public ResponseEntity<String> subscribeProduct(@PathVariable String buyerId, @PathVariable String prodId, @PathVariable Integer quantity)
+	{
+		try {
+			String message=productService.subscribeProduct(buyerId, prodId, quantity);
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage(), e);
+		}
+	}
+	
 	//Deleting product based on product id
 	@DeleteMapping(value = "/deleteProduct/{id}")
 	public ResponseEntity<String> deleteProduct(@PathVariable String id){
