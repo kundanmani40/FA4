@@ -41,7 +41,7 @@ public class UserAPI {
 	@Value("${product.uri}")
 	String prodUri;
 
-	private static final String TOPIC = "kafka-example";
+	private static final String TOPIC = "Test";
 
 			
 	@GetMapping("/publish/{message}") public String post(@PathVariable("message")
@@ -252,12 +252,8 @@ public class UserAPI {
 			if(productDto!=null)
 			{
 				String message=userService.addToCart(buyerId, prodId, quantity);
-				String msg ="";
-				msg=msg.concat(buyerId+" ");
-				msg=msg.concat(prodId+" ");
-				msg=msg.concat(String.valueOf(quantity)+" ");
-				kafkaTemplate.send(TOPIC,msg);
-				
+				String orderDetails=""+buyerId+" "+prodId+" "+quantity;
+				kafkaTemplate.send(TOPIC,orderDetails);
 				return new ResponseEntity<>(message, HttpStatus.ACCEPTED);
 			}
 			else
@@ -359,7 +355,7 @@ public class UserAPI {
 		}
 	}
 		
-	//Visitor can register as seller
+	//Visitor can register as buyer
 	@PostMapping(value = "/visitor/registerAsSeller")
 	public ResponseEntity<String> visitorRegisterAsSeller(@RequestBody SellerDTO sellerDto) throws Exception{
 		try {

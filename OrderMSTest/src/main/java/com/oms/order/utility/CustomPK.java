@@ -5,15 +5,15 @@ import java.io.Serializable;
 @SuppressWarnings("serial")
 public class CustomPK implements Serializable {
 	protected String buyerId;
-	protected String productId;
+	protected String prodId;
 	public CustomPK() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	public CustomPK(String buyerId, String productId) {
+	public CustomPK(String buyerId, String prodId) {
 		super();
 		this.buyerId = buyerId;
-		this.productId = productId;
+		this.prodId = prodId;
 	}
 	
 	public String getBuyerId() {
@@ -23,10 +23,10 @@ public class CustomPK implements Serializable {
 		this.buyerId = buyerId;
 	}
 	public String getProductId() {
-		return productId;
+		return prodId;
 	}
-	public void setProductId(String productId) {
-		this.productId = productId;
+	public void setProductId(String prodId) {
+		this.prodId = prodId;
 	}
 	
 	@Override
@@ -34,7 +34,7 @@ public class CustomPK implements Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((buyerId == null) ? 0 : buyerId.hashCode());
-		result = prime * result + ((productId == null) ? 0 : productId.hashCode());
+		result = prime * result + ((prodId == null) ? 0 : prodId.hashCode());
 		return result;
 	}
 	@Override
@@ -51,10 +51,10 @@ public class CustomPK implements Serializable {
 				return false;
 		} else if (!buyerId.equals(other.buyerId))
 			return false;
-		if (productId == null) {
-			if (other.productId != null)
+		if (prodId == null) {
+			if (other.prodId != null)
 				return false;
-		} else if (!productId.equals(other.productId))
+		} else if (!prodId.equals(other.prodId))
 			return false;
 		return true;
 	}	

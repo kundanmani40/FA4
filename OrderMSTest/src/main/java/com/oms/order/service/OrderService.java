@@ -15,5 +15,8 @@ public interface OrderService {
 	
 	public PlacedOrderDTO placeOrder(String buyerMode, List<CartDTO> cartList, List<ProductDTO> productList, OrderDTO order) throws Exception;
 
-
+	public String generateKafkaOrder(String buyerId, String buyerMode) throws Exception;
+	
+	public PlacedOrderDTO placeKafkaOrder(String orderId, ProductDTO productDto, String buyerId, Integer quantity) throws Exception;
+	
 }

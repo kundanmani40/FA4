@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,41 @@ public class OrderAPI {
 	
 	@Value("${product.uri}")
 	String productUri;
+	
+	@KafkaListener(topics = "Test", groupId = "group_id")
+    public void consume(String message) {
+        System.out.println("Consumed message: " + message);
+        String[] array=message.split(" ");
+        for(int i=0; i<array.length ;i++)
+        {
+        	System.out.println(array[i]);
+        }
+        placeKakfaOrder(array[0], array[1], Integer.parseInt(array[2]));        	
+    }
+	
+	public ResponseEntity<String> placeKakfaOrder(String buyerId, String prodId, Integer quantity)
+	{
+		try {
+			
+			String buyerMode=new RestTemplate().getForObject(userUri+"/buyer/getBuyerMode/"+buyerId, String.class);
+			String orderId=orderService.generateKafkaOrder(buyerId, buyerMode);
+			
+			ProductDTO productDto=new RestTemplate().getForObject(productUri+"/getById/"+prodId, ProductDTO.class);
+			PlacedOrderDTO orderPlaced=orderService.placeKafkaOrder(orderId, productDto, buyerId, quantity);
+			
+			System.out.println(orderPlaced);
+			new RestTemplate().put(productUri+"/updateStock/delete/"+prodId+"/"+quantity, orderPlaced);
+			new RestTemplate().delete(userUri+"/buyer/removeItemFromCart/"+buyerId+"/"+prodId);
+			new RestTemplate().put(userUri+"/updateRewardPoints/add/"+buyerId+"/"+orderPlaced.getRewardPoints(), orderPlaced);
+			return new ResponseEntity<String>(orderPlaced.getOrderId(),HttpStatus.ACCEPTED);
+			
+		}
+		catch(Exception e)
+		{
+			String message="Either cart or product is empty for the buyer id";
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message, e);
+		}
+	}
 	
 	//Add to cart method
 	@PostMapping(value = "/addToCart/{buyerId}/{prodId}/{quantity}")
@@ -101,7 +137,7 @@ public class OrderAPI {
 	}
 		
 	//Place order method
-	@SuppressWarnings("unchecked")
+//	@SuppressWarnings("unchecked")
 	@PostMapping(value = "/placeOrder/{buyerId}")
 	public ResponseEntity<String> placeOrder(@PathVariable String buyerId, @RequestBody OrderDTO order)
 	{
@@ -121,9 +157,9 @@ public class OrderAPI {
 			}
 			String buyerMode=new RestTemplate().getForObject(userUri+"/buyer/getBuyerMode/"+buyerId, String.class);
 			PlacedOrderDTO orderPlaced=orderService.placeOrder(buyerMode, cartList, productList, order);
+			System.out.println(orderPlaced);
 			for(CartDTO cartDto : cartList)
 			{
-				System.out.println(cartDto.getProdId()+" "+cartDto.getQuantity());
 				new RestTemplate().put(productUri+"/updateStock/delete/"+cartDto.getProdId()+"/"+cartDto.getQuantity(), orderPlaced);
 				new RestTemplate().delete(userUri+"/buyer/removeItemFromCart/"+buyerId+"/"+cartDto.getProdId());
 			}

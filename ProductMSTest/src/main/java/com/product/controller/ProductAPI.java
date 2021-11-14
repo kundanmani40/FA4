@@ -78,7 +78,7 @@ public class ProductAPI {
 	{
 		try {
 			List<ProductDTO> productDTO = productService.getProductByCategory(name);
-			return new ResponseEntity<List<ProductDTO>>(productDTO,HttpStatus.OK);
+			return new ResponseEntity<>(productDTO,HttpStatus.OK);
 		}
 		catch(Exception e)
 		{
@@ -107,7 +107,7 @@ public class ProductAPI {
 	{
 		try {
 			String message=productService.subscribeProduct(buyerId, prodId, quantity);
-			return new ResponseEntity<String>(message, HttpStatus.OK);
+			return new ResponseEntity<>(message, HttpStatus.OK);
 		}
 		catch(Exception e)
 		{

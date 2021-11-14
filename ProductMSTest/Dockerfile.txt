@@ -5,4 +5,12 @@ WORKDIR /usr/app
 EXPOSE 8200
 ENV JAVA_OPTS=""
 RUN sh -c "touch ProductMS-0.0.1-SNAPSHOT.jar"
-ENTRYPOINT [ "java", "-jar", "ProductMS-0.0.1-SNAPSHOT.jar" ]
+ENTRYPOINT ["java", "-jar", "ProductMS-0.0.1-SNAPSHOT.jar"]
+
+
+
+
+
+
+insert into product values('P1001','ABC',100.0,450,'Desc','abc.png','S101','Cat1','SubCat1',4.5);
+insert into product values('P1002','Shirt',100.0,450,'Resc','abc.png','S109','Cat2','SubCat1',4.5);

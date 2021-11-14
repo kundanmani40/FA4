@@ -27,13 +27,13 @@ import com.user.validator.Validate;
 @Transactional
 public class UserServiceImpl implements UserService {
 	
-	private static int b;
-	private static int s;
+	private int b;
+	private int s;
 	
-	static {
-		b=100;
-		s=100;
-	}
+//	static {
+//		b=100;
+//		s=100;
+//	}
 	
 	@Autowired
 	private BuyerRepository buyerRepository;
@@ -59,15 +59,17 @@ public class UserServiceImpl implements UserService {
 		buyer = new Buyer();
 		
 		//Method1
+		b=100;
 		while(true)
 		{
-			String bNew="B"+b++;
+			String bNew="B"+b;
 			Buyer buyerCheck=buyerRepository.findByBuyerId(bNew);
 			if(buyerCheck == null)
 			{
 				buyer.setBuyerId(bNew);
 				break;
 			}
+			b++;
 		}
 		//Method2
 		/*while(true)
@@ -106,15 +108,17 @@ public class UserServiceImpl implements UserService {
 		seller = new Seller();
 		
 		//Method1
+		s=100;
 		while(true)
 		{
-			String sNew="S"+s++;
+			String sNew="S"+s;
 			Seller sellerCheck=sellerRepository.findBySellerId(sNew);
 			if(sellerCheck == null)
 			{
 				seller.setSellerId(sNew);
 				break;
 			}
+			s++;
 		}
 		
 		//Method2
@@ -370,6 +374,10 @@ public class UserServiceImpl implements UserService {
 			throw new Exception("Buyer with buyer id "+ buyerId +" does not exists");
 		}
 		buyer.setRewardPoints(String.valueOf((Integer.parseInt(buyer.getRewardPoints())-rewardPoints)));
+		if(Integer.parseInt(buyer.getRewardPoints())<0)
+		{
+			buyer.setRewardPoints(String.valueOf(0));
+		}
 		buyerRepository.save(buyer);
 		return "Reward points deleted for buyer with id : "+buyer.getBuyerId();
 	}

@@ -29,11 +29,9 @@ public class ProductServiceImpl implements ProductService {
 	private SubscribedProductRepository subscribedProductRepository;
 	
 	//Creating unique static Pid
-	private static int pId;
+	private int pId;
 	
-	static {
-		pId=1000;
-	}
+
 	
 	//Add product service
 	@Override
@@ -49,8 +47,36 @@ public class ProductServiceImpl implements ProductService {
 		else
 		{
 			product = new Product();
-			String id = "P"+pId++;
-			product.setProdId(id);
+//			String id = "P"+pId++;
+			
+			//Method1
+			pId=1000;
+			while(true)
+			{
+				String pNew="P"+pId;
+				Product productCheck=productRepository.findByProdId(pNew);
+				if(productCheck == null)
+				{
+					product.setProdId(pNew);
+					break;
+				}
+				pId++;
+			}
+			//Method2
+			/*while(true)
+			{
+				
+				int p=random.nextInt(1000);
+				String pNew="P"+p;
+				Product productCheck=productRepository.findByProdId(pNew);
+				if(productCheck == null)
+				{
+					product.setProdId(pNew);
+					break;
+				}
+			}*/
+			
+//			product.setProdId(id);
 			product.setProductName(productDTO.getProductName());
 			product.setPrice(productDTO.getPrice());
 			product.setCategory(productDTO.getCategory());

@@ -24,17 +24,17 @@ import com.oms.order.utility.CustomPK;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 	
-	@KafkaListener(topics = "kafka-example", groupId = "group_id")
-    public void consume(String message) {
-        System.out.println("Consumed message: " + message);
-        String[] array=message.split(" ");
-        for(int i=0; i<array.length ;i++)
-        {
-        	System.out.println(array[i]);
-        }
-    }
+//	@KafkaListener(topics = "Test", groupId = "group_id")
+//    public void consume(String message) {
+//        System.out.println("Consumed message: " + message);
+//        String[] array=message.split(" ");
+//        for(int i=0; i<array.length ;i++)
+//        {
+//        	System.out.println(array[i]);
+//        }
+//    }
 	
-	private static int o;
+	private int o;
 	
 	@Autowired
 	private OrderRepository orderRepository;
@@ -42,9 +42,9 @@ public class OrderServiceImpl implements OrderService {
 	@Autowired
 	private ProductsOrderedRepository prodOrderedRepository;
 	
-	static {
-		o=100;
-	}
+//	static {
+//		o=100;
+//	}
 
 	//View all orders service
 	@Override
@@ -98,15 +98,17 @@ public class OrderServiceImpl implements OrderService {
 		Order order=new Order();
 		
 		//Method1
+		o=100;
 		while(true)
 		{
-			String id="O"+o++;
+			String id="O"+o;
 			Order orderCheck=orderRepository.findByOrderId(id);
 			if(orderCheck == null)
 			{
 				order.setOrderId(id);
 				break;
 			}
+			o++;
 		}
 		
 		//Method2
@@ -131,7 +133,7 @@ public class OrderServiceImpl implements OrderService {
 		order.setDate(LocalDate.now());
 		order.setAddress(orderDto.getAddress());
 		order.setStatus("PLACED");
-			
+		
 		List<ProductsOrdered> productsOrderedList=new ArrayList<>();
 		for(int i=0;i<cartList.size();i++)
 		{
@@ -152,5 +154,73 @@ public class OrderServiceImpl implements OrderService {
 		return placedOrder;
 			
 	}
+	
+	@Override
+	public String generateKafkaOrder(String buyerId, String buyerMode) throws Exception{
+		Order order=new Order();
+		
+		//Method1
+		o=100;
+		while(true)
+		{
+			String id="O"+o;
+			Order orderCheck=orderRepository.findByOrderId(id);
+			if(orderCheck == null)
+			{
+				order.setOrderId(id);
+				break;
+			}
+			o++;
+		}
+		
+		//Method2
+		/*while(true)
+		{
+			Random random=new Random();
+			String id="O"+random.nextInt();
+			Order orderCheck=orderRepository.findByOrderId(id);
+			if(orderCheck == null)
+			{
+				order.setOrderId(id);
+				break;
+			}
+		}*/
+		
+		order.setBuyerId(buyerId);
+		order.setAmount(50f);
+		if(buyerMode.equals("True"))
+		{
+			order.setAmount(0f);
+		}
+		order.setDate(LocalDate.now());
+		order.setAddress("Un-defined");
+		order.setStatus("In Order");
+		
+		orderRepository.save(order);
+		return order.getOrderId();
+	}
 
+	@Override
+	public PlacedOrderDTO placeKafkaOrder(String orderId, ProductDTO productDto, String buyerId, Integer quantity) throws Exception{
+		Order order=orderRepository.findByOrderId(orderId);
+		if(order == null)
+		{
+			throw new Exception("Order with id: "+orderId+" does not exists");
+		}
+		order.setAmount(order.getAmount()+(quantity*productDto.getPrice()));
+		ProductsOrdered productsOrdered=new ProductsOrdered();
+		productsOrdered.setPrimaryKeys(new CustomPK(buyerId, productDto.getProdId()));;
+		productsOrdered.setSellerId(productDto.getSellerId());
+		productsOrdered.setQuantity(quantity);
+		
+		prodOrderedRepository.save(productsOrdered);
+		orderRepository.save(order);
+		PlacedOrderDTO placedOrder=new PlacedOrderDTO();
+		placedOrder.setBuyerId(order.getBuyerId());
+		placedOrder.setOrderId(order.getOrderId());
+		Integer points=(int) (order.getAmount()/100);
+		placedOrder.setRewardPoints(points);
+		return placedOrder;
+	}
+	
 }
